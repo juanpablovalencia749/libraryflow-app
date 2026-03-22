@@ -3,11 +3,13 @@ import type { AnyAction, Reducer } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import booksReducer from './booksSlice';
 import loansReducer from './loansSlice';
+import loggerReducer from './loggerSlice';
 
 const appReducer = combineReducers({
   auth: authReducer,
   books: booksReducer,
   loans: loansReducer,
+  logger: loggerReducer,
 });
 
 const rootReducer: Reducer = (state: RootState | undefined, action: AnyAction) => {

@@ -52,7 +52,9 @@ export const MyLoans = () => {
     if (!selectedId) return;
     setActionLoading(true);
     try {
-      await dispatch(loanBook({ bookId: selectedId, notes: "Loaned from waitlist" })).unwrap();
+      await dispatch(
+        loanBook({ bookId: selectedId, notes: "Loaned from waitlist" }),
+      ).unwrap();
       dispatch(fetchMyLoans());
       setIsLoanDialogOpen(false);
     } catch (err) {
@@ -190,13 +192,13 @@ export const MyLoans = () => {
                 </div>
               </CardHeader>
               <CardContent className="px-5 pb-5">
-                {res.queuePosition === 1 ? (
+                {res.queuePosition === 1 && res.book.status === "AVAILABLE" ? (
                   <div className="space-y-4">
                     <div className="p-3 bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 rounded-lg flex items-center gap-2 text-sm font-medium">
                       <CheckCircle className="h-4 w-4" />
                       Book is ready for you!
                     </div>
-                    <Button 
+                    <Button
                       className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-sm rounded-xl"
                       onClick={() => handleLoanClick(res.book.id)}
                     >

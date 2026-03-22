@@ -64,6 +64,18 @@ export const BooksList = () => {
     }
   };
 
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm !== undefined) {
+        dispatch(fetchBooks({ page: 1, limit: 20, title: searchTerm }));
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, dispatch]);
+
   const openActionModal = (book: Book) => {
     setSelectedBook(book);
     setNotes("");
@@ -85,18 +97,19 @@ export const BooksList = () => {
         </div>
 
         <div className="relative w-full sm:w-80 group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+            {status === "loading" && searchTerm ? (
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            ) : (
+              <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            )}
+          </div>
           <input
             type="text"
             placeholder="Search by title, author, or genre..."
             className="w-full h-11 pl-10 pr-4 rounded-xl border border-input bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-            onChange={(e) => {
-              const val = e.target.value;
-              const timer = setTimeout(() => {
-                dispatch(fetchBooks({ title: val }));
-              }, 500);
-              return () => clearTimeout(timer);
-            }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>

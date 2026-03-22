@@ -1,7 +1,8 @@
 import type { Book } from "@/store/booksSlice";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Book as BookIcon, Calendar, User, Library } from "lucide-react";
+import { Book as BookIcon, Calendar, User, Library, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface BookCardProps {
@@ -27,7 +28,7 @@ export const BookCard = ({ book, onAction }: BookCardProps) => {
 
   return (
     <Card className={`flex flex-col overflow-hidden hover:shadow-lg transition-all duration-300 border-none bg-white dark:bg-gray-800/50 backdrop-blur-sm group ${borrowedByMe ? 'ring-2 ring-indigo-500/50' : hasMyReservation ? 'ring-2 ring-emerald-500/50' : ''}`}>
-      <div className="relative h-64 bg-muted overflow-hidden">
+      <Link to={`/books/${book.id}`} className="relative h-64 bg-muted overflow-hidden">
         {book.imageUrl ? (
           <img
             src={book.imageUrl}
@@ -72,12 +73,14 @@ export const BookCard = ({ book, onAction }: BookCardProps) => {
             </Badge>
           )}
         </div>
-      </div>
+      </Link>
       
       <CardHeader className="p-5 flex-1 space-y-2">
-        <CardTitle className="line-clamp-2 text-xl font-bold group-hover:text-primary transition-colors">
-          {book.title}
-        </CardTitle>
+        <Link to={`/books/${book.id}`}>
+          <CardTitle className="line-clamp-2 text-xl font-bold hover:text-primary transition-colors cursor-pointer">
+            {book.title}
+          </CardTitle>
+        </Link>
         <div className="flex items-center text-sm text-muted-foreground gap-2">
           <User className="h-4 w-4" />
           <span className="font-medium">{book.author}</span>
@@ -88,7 +91,7 @@ export const BookCard = ({ book, onAction }: BookCardProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="p-5 pt-0 mt-auto">
+      <CardContent className="p-5 pt-0 mt-auto space-y-3">
         {borrowedByMe ? (
           <Button
             className="w-full font-bold gap-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-100"
@@ -131,6 +134,13 @@ export const BookCard = ({ book, onAction }: BookCardProps) => {
             </span>
           </Button>
         )}
+        
+        <Link to={`/books/${book.id}`} className="block">
+          <Button variant="outline" className="w-full rounded-xl gap-2 h-10 border-gray-200 dark:border-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800">
+            <Info className="h-4 w-4 text-primary" />
+            View Full Details
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );

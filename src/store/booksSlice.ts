@@ -28,6 +28,7 @@ interface BooksResponse {
 
 interface BooksState {
   books: Book[];
+  selectedBook: Book | null;
   total: number;
   page: number;
   limit: number;
@@ -38,6 +39,7 @@ interface BooksState {
 
 const initialState: BooksState = {
   books: [],
+  selectedBook: null,
   total: 0,
   page: 1,
   limit: 10,
@@ -75,6 +77,14 @@ export const fetchBooks = createAsyncThunk(
   },
 );
 
+export const fetchBookById = createAsyncThunk(
+  "books/fetchBookById",
+  async (id: number) => {
+    const response = await axiosClient.get(`/books/${id}`);
+    return response.data;
+  },
+);
+
 export const createBook = createAsyncThunk(
   "books/createBook",
   async (newBook: Omit<Book, "id" | "createdAt">) => {
@@ -107,6 +117,18 @@ const booksSlice = createSlice({
     builder
       .addCase(fetchBooks.pending, (state) => {
         state.status = "loading";
+      })
+      .addCase(fetchBookById.pending, (state) => {
+        state.status = "loading";
+        state.selectedBook = null;
+      })
+      .addCase(fetchBookById.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.selectedBook = action.payload;
+      })
+      .addCase(fetchBookById.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message || "Failed to fetch book";
       })
       .addCase(fetchBooks.fulfilled, (state, action) => {
         state.status = "succeeded";

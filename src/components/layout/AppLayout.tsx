@@ -2,7 +2,7 @@ import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { logout } from "@/store/authSlice";
-import { BookOpen, LogOut, Menu, UserCircle } from "lucide-react";
+import { BookOpen, LogOut, UserCircle } from "lucide-react";
 
 export const AppLayout = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -32,12 +32,20 @@ export const AppLayout = () => {
               Books
             </Link>
             {user?.role === "ADMIN" && (
-              <Link
-                to="/admin"
-                className="text-sm font-medium transition-colors hover:text-primary"
-              >
-                Admin Dashboard
-              </Link>
+              <>
+                <Link
+                  to="/admin"
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Admin Dashboard
+                </Link>
+                <Link
+                  to="/admin/logs"
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Logs
+                </Link>
+              </>
             )}
             {user && (
               <Link
