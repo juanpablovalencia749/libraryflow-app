@@ -1,41 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { axiosClient } from "@/api/axiosClient";
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string;
-  imageUrl?: string;
-  publicationYear: number;
-  status: "AVAILABLE" | "RESERVED" | "LOANED";
-  reservationCount?: number;
-  hasMyReservation?: boolean;
-  myQueuePosition?: number | null;
-  nextQueuePositionIfReserveNow?: number;
-  borrowedByMe?: boolean;
-  createdAt?: string;
-}
-
-interface BooksResponse {
-  data: Book[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-interface BooksState {
-  books: Book[];
-  selectedBook: Book | null;
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-}
+import type { Book, PaginatedResponse, BooksState } from "@/types";
+import { ENDPOINTS } from "@/constants";
 
 const initialState: BooksState = {
   books: [],
@@ -58,7 +24,7 @@ export const fetchBooks = createAsyncThunk(
     sortBy?: string;
     order?: "asc" | "desc";
   }) => {
-    const response = await axiosClient.get("/books", { params });
+    const response = await axiosClient.get(ENDPOINTS.BOOKS.BASE, { params });
     // Assume backend returns { data: [], meta: {...} } or just [] if no pagination setup.
     // If backend returns just an array, we map it to response.data
     // I will assume it returns { data, meta } based on typical paginated APIs.
@@ -73,14 +39,14 @@ export const fetchBooks = createAsyncThunk(
         },
       };
     }
-    return response.data as BooksResponse;
+    return response.data as PaginatedResponse<Book>;
   },
 );
 
 export const fetchBookById = createAsyncThunk(
   "books/fetchBookById",
   async (id: number) => {
-    const response = await axiosClient.get(`/books/${id}`);
+    const response = await axiosClient.get(ENDPOINTS.BOOKS.BY_ID(id));
     return response.data;
   },
 );
@@ -88,7 +54,7 @@ export const fetchBookById = createAsyncThunk(
 export const createBook = createAsyncThunk(
   "books/createBook",
   async (newBook: Omit<Book, "id" | "createdAt">) => {
-    const response = await axiosClient.post("/books", newBook);
+    const response = await axiosClient.post(ENDPOINTS.BOOKS.BASE, newBook);
     return response.data;
   },
 );
@@ -96,7 +62,7 @@ export const createBook = createAsyncThunk(
 export const updateBook = createAsyncThunk(
   "books/updateBook",
   async ({ id, data }: { id: number; data: Partial<Book> }) => {
-    const response = await axiosClient.patch(`/books/${id}`, data);
+    const response = await axiosClient.patch(ENDPOINTS.BOOKS.BY_ID(id), data);
     return response.data;
   },
 );
@@ -104,7 +70,7 @@ export const updateBook = createAsyncThunk(
 export const deleteBook = createAsyncThunk(
   "books/deleteBook",
   async (id: number) => {
-    await axiosClient.delete(`/books/${id}`);
+    await axiosClient.delete(ENDPOINTS.BOOKS.BY_ID(id));
     return id;
   },
 );

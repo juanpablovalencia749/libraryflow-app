@@ -1,45 +1,31 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { axiosClient } from "@/api/axiosClient";
+import type { Loan, Reservation, LoansState } from "@/types";
+import { ENDPOINTS } from "@/constants";
 
 type LoanResponse = {
-  loans: any[];
-  reservations: any[];
+  loans: Loan[];
+  reservations: Reservation[];
 };
 
 export const fetchMyLoans = createAsyncThunk<LoanResponse>(
   "loans/fetchMyLoans",
   async () => {
     const [loansRes, reservationsRes] = await Promise.all([
-      axiosClient.get("/loans/my-loans"),
-      axiosClient.get("/loans/my-reservations"),
+      axiosClient.get(ENDPOINTS.LOANS.MY_LOANS),
+      axiosClient.get("/loans/my-reservations"), // Add this to ENDPOINTS if missing or use string for now
     ]);
 
-    console.log("fetchMyLoans loans:", loansRes.data);
-    console.log("fetchMyLoans reservations:", reservationsRes.data);
-
     return {
-      loans: Array.isArray(loansRes.data)
-        ? loansRes.data
-        : loansRes.data
-          ? [loansRes.data]
-          : [],
+      loans: Array.isArray(loansRes.data) ? loansRes.data : [],
       reservations: Array.isArray(reservationsRes.data)
         ? reservationsRes.data
-        : reservationsRes.data
-          ? [reservationsRes.data]
-          : [],
+        : [],
     };
   },
 );
 
-interface LoanState {
-  loans: any[];
-  reservations: any[];
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-}
-
-const initialState: LoanState = {
+const initialState: LoansState = {
   loans: [],
   reservations: [],
   status: "idle",
@@ -49,7 +35,7 @@ const initialState: LoanState = {
 export const reserveBook = createAsyncThunk(
   "loans/reserveBook",
   async ({ bookId, notes }: { bookId: number; notes: string }) => {
-    const response = await axiosClient.post("/loans/reserve", {
+    const response = await axiosClient.post(ENDPOINTS.LOANS.RESERVE, {
       bookId,
       notes,
     });
@@ -60,7 +46,12 @@ export const reserveBook = createAsyncThunk(
 export const loanBook = createAsyncThunk(
   "loans/loanBook",
   async ({ bookId, notes }: { bookId: number; notes: string }) => {
-    const response = await axiosClient.post("/loans/loan", { bookId, notes });
+    console.log("Loaning book with ID:", bookId, "and notes:", notes);
+    const response = await axiosClient.post(ENDPOINTS.LOANS.LOAN, {
+      bookId,
+      notes,
+    });
+    console.log("Loan response:", response.data);
     return response.data;
   },
 );
@@ -68,7 +59,7 @@ export const loanBook = createAsyncThunk(
 export const returnBook = createAsyncThunk(
   "loans/returnBook",
   async (loanId: number) => {
-    const response = await axiosClient.patch(`/loans/return/${loanId}`);
+    const response = await axiosClient.patch(ENDPOINTS.LOANS.RETURN(loanId));
     return response.data;
   },
 );

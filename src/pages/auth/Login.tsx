@@ -52,7 +52,7 @@ export const Login = () => {
         }
       }
       
-      dispatch(setCredentials({ token: actualToken, user: userData }));
+      dispatch(setCredentials({ user: userData }));
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');

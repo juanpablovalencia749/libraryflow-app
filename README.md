@@ -1,73 +1,47 @@
-# React + TypeScript + Vite
+# LibraryFlow - Book Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, fast, and secure library management application built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Admin Dashboard**: Comprehensive management interface for books and inventory.
+- **System Logs**: Audit trail and application activity monitoring with integrated pagination.
+- **Reusable Data Tables**: Generic `DataTable` component for consistent UI and reduced boilerplate across the application.
+- **Book Management**: Create, update, and delete books with a refined workflow.
+- **Debounced Search**: Optimized search functionality for better performance.
+- **Role-Based Access**: Secured routes and actions for administrators.
+- **Modern UI**: Built with Tailwind CSS and Lucide icons for a premium feel.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19, TypeScript, Vite
+- **state Management**: Redux Toolkit
+- **Styling**: Tailwind CSS, PostCSS
+- **Forms**: React Hook Form, Zod
+- **Icons**: Lucide React
+- **Testing**: Vitest, React Testing Library
 
-## Expanding the ESLint configuration
+## 📂 Project Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- `src/components/ui`: Reusable UI components (Buttons, Modals, Tables, etc.)
+- `src/pages/admin`: Admin-specific views (Dashboard, Logs)
+- `src/store`: Redux slices and store configuration
+- `src/hooks`: Custom React hooks for data fetching and actions
+- `src/schemas`: Zod validation schemas
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🏗️ Reusable Components
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### DataTable
+The `@/components/ui/DataTable` is a powerful, generic component for displaying tabular data. It handles:
+- **Columns**: Definable headers and custom cell rendering.
+- **Loading States**: Built-in support for loading indicators.
+- **Empty States**: Configurable messages for empty data.
+- **Pagination**: Integrated pagination UI with customizable callbacks.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🚦 Getting Started
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Set up your `.env` file with the API URL.
+4. Run the development server: `npm run dev`.
+5. Run tests: `npm run test`.

@@ -1,91 +1,60 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "@/store";
-import { fetchBooks } from "@/store/booksSlice";
-import type { Book } from "@/store/booksSlice";
-import { reserveBook, loanBook } from "@/store/loansSlice";
-import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Search, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { BookCard } from "@/components/books/BookCard";
+import { BookActionModal } from "@/components/books/BookActionModal";
+import { useBooks } from "@/hooks/useBooks";
+import { Button } from "@/components/ui/button";
+import type { Book } from "@/types";
 
 export const BooksList = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { books, status, error } = useSelector(
-    (state: RootState) => state.books,
-  );
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlPage = parseInt(searchParams.get("page") || "1");
+
+  const {
+    books,
+    status,
+    error,
+    searchTerm,
+    handleSearch,
+    handlePageChange,
+    currentPage,
+    totalPages,
+    refresh,
+    isLoading,
+    isFailed,
+    isSucceeded
+  } = useBooks({ page: urlPage, limit: 4 });
 
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [actionStatus, setActionStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [queuePosition, setQueuePosition] = useState<number | null>(null);
 
-  useEffect(() => {
-    // Re-fetch whenever idle OR when authentication state changes to ensure fresh data
-    dispatch(fetchBooks({ page: 1, limit: 20 }));
-  }, [dispatch, isAuthenticated]);
-
-  const handleAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBook) return;
-
-    setActionStatus("loading");
-    try {
-      // Use the same logic as the button to decide action
-      const hasWaitlist = (selectedBook.reservationCount ?? 0) > 0;
-      const isMyTurn = selectedBook.hasMyReservation && selectedBook.myQueuePosition === 1;
-      const canDirectLoan = selectedBook.status === "AVAILABLE" && !hasWaitlist;
-      
-      const isLoan = canDirectLoan || (isMyTurn && (selectedBook.status === "AVAILABLE" || selectedBook.status === "RESERVED"));
-      
-      const action = isLoan ? loanBook : reserveBook;
-      
-      const result = await dispatch(action({ bookId: selectedBook.id, notes })).unwrap();
-      
-      if (!isLoan && result.queuePosition) {
-        setQueuePosition(result.queuePosition);
-      } else {
-        setQueuePosition(null);
-      }
-      
-      setActionStatus("success");
-      
-      setTimeout(() => {
-        setIsModalOpen(false);
-        setActionStatus("idle");
-        dispatch(fetchBooks({ page: 1, limit: 20 }));
-      }, isLoan ? 1500 : 3000);
-    } catch (err) {
-      setActionStatus("error");
-    }
+  // Sync internal page with URL parameter
+  const onPageClick = (page: number) => {
+    setSearchParams({ page: page.toString(), search: searchTerm });
+    handlePageChange(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [localSearch, setLocalSearch] = useState(searchParams.get("search") || "");
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm !== undefined) {
-        dispatch(fetchBooks({ page: 1, limit: 20, title: searchTerm }));
+    const timer = setTimeout(() => {
+      if (localSearch !== searchTerm) {
+        handleSearch(localSearch);
+        setSearchParams({ page: "1", search: localSearch });
       }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, dispatch]);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [localSearch, handleSearch, setSearchParams]);
 
   const openActionModal = (book: Book) => {
     setSelectedBook(book);
-    setNotes("");
-    setActionStatus("idle");
-    setQueuePosition(null);
     setIsModalOpen(true);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -98,7 +67,7 @@ export const BooksList = () => {
 
         <div className="relative w-full sm:w-80 group">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
-            {status === "loading" && searchTerm ? (
+            {status === "loading" && localSearch ? (
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
             ) : (
               <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -108,112 +77,115 @@ export const BooksList = () => {
             type="text"
             placeholder="Search by title, author, or genre..."
             className="w-full h-11 pl-10 pr-4 rounded-xl border border-input bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
           />
         </div>
       </div>
 
-      {status === "loading" && (
+      {isLoading && books.length === 0 && (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground font-medium">Loading collection...</p>
         </div>
       )}
       
-      {status === "failed" && (
+      {isFailed && (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-destructive font-semibold">Error: {error}</p>
-          <Button onClick={() => dispatch(fetchBooks({ page: 1, limit: 20 }))}>Retry</Button>
+          <button 
+            onClick={refresh}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       )}
 
-      {status === "succeeded" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {books.map((book) => (
-            <BookCard 
-              key={book.id} 
-              book={book} 
-              onAction={openActionModal} 
-            />
-          ))}
-          
-          {books.length === 0 && (
-            <div className="col-span-full py-32 text-center bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
-              <p className="text-muted-foreground text-lg italic">No books found matching your search.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedBook?.status === "AVAILABLE" ? "Confirm Loan" : "Join Waitlist"}
-        description={selectedBook?.title ? `For: "${selectedBook.title}"` : ""}
-      >
-        <form onSubmit={handleAction} className="space-y-6">
-          {actionStatus === "success" && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-3 animate-in zoom-in-95">
-              <CheckCircle2 className="h-5 w-5 shrink-0" />
-              <div className="text-sm">
-                <p className="font-bold">Transaction Confirmed!</p>
-                {queuePosition !== null ? (
-                  <p>You have joined the waitlist. Your turn is: <span className="font-black text-lg">#{queuePosition}</span></p>
-                ) : (
-                  <p>The book has been successfully loaned to you.</p>
-                )}
+      {isSucceeded && (
+        <div className="space-y-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {books.map((book) => (
+              <BookCard 
+                key={book.id} 
+                book={book} 
+                onAction={openActionModal} 
+              />
+            ))}
+            
+            {books.length === 0 && (
+              <div className="col-span-full py-32 text-center bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
+                <p className="text-muted-foreground text-lg italic">No books found matching your search.</p>
               </div>
-            </div>
-          )}
-          
-          {actionStatus === "error" && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 animate-in shake-x">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="text-sm font-medium">Something went wrong. Please try again later.</p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <Label htmlFor="notes" className="text-base font-semibold">Notes</Label>
-            <Input
-              id="notes"
-              placeholder="Any special instructions for the librarian?"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="h-12 rounded-xl"
-              disabled={actionStatus === "loading" || actionStatus === "success"}
-            />
-            <p className="text-xs text-muted-foreground">Optional information for your record.</p>
+            )}
           </div>
 
-          <div className="pt-2 flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsModalOpen(false)}
-              className="rounded-xl h-11 px-6"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={actionStatus === "loading" || actionStatus === "success"}
-              className="rounded-xl h-11 px-8 min-w-[140px]"
-            >
-              {actionStatus === "loading" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : selectedBook?.status === "AVAILABLE" ? (
-                "Confirm Loan"
-              ) : (
-                "Join Waitlist"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+          {/* Pagination UI */}
+          {totalPages > 1 && (
+            <div className="flex flex-col items-center gap-4 pt-8 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onPageClick(currentPage - 1)}
+                  disabled={currentPage === 1 || isLoading}
+                  className="rounded-full"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .map((p, index, array) => (
+                      <div key={p} className="flex items-center gap-1">
+                        {index > 0 && array[index - 1] !== p - 1 && (
+                          <span className="text-muted-foreground px-1">...</span>
+                        )}
+                        <Button
+                          variant={currentPage === p ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => onPageClick(p)}
+                          disabled={isLoading}
+                          className={`min-w-[40px] rounded-full ${currentPage === p ? 'shadow-md shadow-primary/20' : ''}`}
+                        >
+                          {p}
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onPageClick(currentPage + 1)}
+                  disabled={currentPage === totalPages || isLoading}
+                  className="rounded-full"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground font-medium">
+                Page {currentPage} of {totalPages}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {selectedBook && (
+        <BookActionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          bookId={selectedBook.id}
+          bookTitle={selectedBook.title}
+          isAvailable={selectedBook.status === "AVAILABLE"}
+          onActionSuccess={refresh}
+        />
+      )}
     </div>
   );
 };
+
 

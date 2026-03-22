@@ -1,67 +1,50 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "@/store";
-import { fetchMyLoans, returnBook, loanBook } from "@/store/loansSlice";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "../../components/ui/badge";
+import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
-  Book as BookIcon,
   Clock,
-  RotateCcw,
   Loader2,
   Library,
-  CheckCircle,
-  Hash,
 } from "lucide-react";
 
+// Hooks & Components
+import { useMyLoans } from "@/hooks/useMyLoans";
+import { useBookActions } from "@/hooks/useBookActions";
+import { LoanCard } from "@/components/loans/LoanCard";
+import { ReservationCard } from "@/components/loans/ReservationCard";
+import type { Loan, Reservation } from "@/types";
+
 export const MyLoans = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { loans, reservations, status } = useSelector(
-    (state: RootState) => state.loans,
-  );
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { loans, reservations, isLoading, refresh } = useMyLoans();
+  const { handleReturn, performAction } = useBookActions();
 
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [isLoanDialogOpen, setIsLoanDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchMyLoans());
-    }
-  }, [dispatch, isAuthenticated]);
-
   const onConfirmReturn = async () => {
     if (!selectedId) return;
     setActionLoading(true);
-    try {
-      await dispatch(returnBook(selectedId)).unwrap();
-      dispatch(fetchMyLoans());
+    const result = await handleReturn(selectedId);
+    if (result.success) {
+      refresh();
       setIsReturnDialogOpen(false);
-    } catch (err) {
-      console.error("Return failed:", err);
-    } finally {
-      setActionLoading(false);
     }
+    setActionLoading(false);
   };
 
   const onConfirmLoan = async () => {
     if (!selectedId) return;
     setActionLoading(true);
-    try {
-      await dispatch(
-        loanBook({ bookId: selectedId, notes: "Loaned from waitlist" }),
-      ).unwrap();
-      dispatch(fetchMyLoans());
+    const result = await performAction(selectedId, { 
+      isLoan: true, 
+      notes: "Loaned from waitlist" 
+    });
+    if (result.success) {
+      refresh();
       setIsLoanDialogOpen(false);
-    } catch (err) {
-      console.error("Loan failed:", err);
-    } finally {
-      setActionLoading(false);
     }
+    setActionLoading(false);
   };
 
   const handleReturnClick = (id: number) => {
@@ -74,7 +57,7 @@ export const MyLoans = () => {
     setIsLoanDialogOpen(true);
   };
 
-  if (status === "loading" && loans.length === 0) {
+  if (isLoading && loans.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -105,48 +88,11 @@ export const MyLoans = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loans.map((loan) => (
-            <Card
-              key={loan.id}
-              className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow bg-white dark:bg-gray-800/40"
-            >
-              <CardHeader className="flex flex-row items-start gap-4 p-5">
-                <div className="h-20 w-16 bg-muted rounded-md overflow-hidden shrink-0">
-                  {loan.book.imageUrl ? (
-                    <img
-                      src={loan.book.imageUrl}
-                      alt={loan.book.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <BookIcon className="h-8 w-8 text-gray-300" />
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-1 min-w-0">
-                  <CardTitle className="text-lg font-bold line-clamp-1">
-                    {loan.book.title}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground truncate">
-                    by {loan.book.author}
-                  </p>
-                  <div className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
-                    <Clock className="h-3 w-3" />
-                    Due on {new Date(loan.dueDate).toLocaleDateString()}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="px-5 pb-5">
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 rounded-xl"
-                  onClick={() => handleReturnClick(loan.id)}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Return Book
-                </Button>
-              </CardContent>
-            </Card>
+            <LoanCard 
+              key={loan.id} 
+              loan={loan} 
+              onReturn={handleReturnClick} 
+            />
           ))}
 
           {loans.length === 0 && (
@@ -168,52 +114,11 @@ export const MyLoans = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reservations.map((res) => (
-            <Card
-              key={res.id}
-              className="overflow-hidden border-none bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30"
-            >
-              <CardHeader className="p-5 flex flex-row items-center justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg font-bold line-clamp-1">
-                    {res.book.title}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className="bg-white dark:bg-gray-950 font-bold gap-1 mt-1"
-                    >
-                      <Hash className="h-3 w-3" />
-                      Turn #{res.queuePosition}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-sm">
-                  {res.queuePosition}
-                </div>
-              </CardHeader>
-              <CardContent className="px-5 pb-5">
-                {res.queuePosition === 1 && res.book.status === "AVAILABLE" ? (
-                  <div className="space-y-4">
-                    <div className="p-3 bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20 rounded-lg flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle className="h-4 w-4" />
-                      Book is ready for you!
-                    </div>
-                    <Button
-                      className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-sm rounded-xl"
-                      onClick={() => handleLoanClick(res.book.id)}
-                    >
-                      <Library className="h-4 w-4" />
-                      Loan Now
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">
-                    You joined on {new Date(res.createdAt).toLocaleDateString()}
-                    .
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <ReservationCard 
+              key={res.id} 
+              reservation={res} 
+              onLoan={handleLoanClick} 
+            />
           ))}
 
           {reservations.length === 0 && (
@@ -249,3 +154,4 @@ export const MyLoans = () => {
     </div>
   );
 };
+

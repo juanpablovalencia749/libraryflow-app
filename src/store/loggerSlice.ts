@@ -1,38 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { axiosClient } from "@/api/axiosClient";
-
-export interface LogEntry {
-  id: number;
-  userId: number | null;
-  entityName: string;
-  entityId: number | null;
-  action: string;
-  description: string;
-  beforeData: any | null;
-  afterData: any | null;
-  ipAddress: string | null;
-  createdAt: string;
-}
-
-interface LoggerResponse {
-  data: LogEntry[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-interface LoggerState {
-  logs: LogEntry[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  status: "idle" | "loading" | "succeeded" | "failed";
-  error: string | null;
-}
+import type { SystemLog, LoggerState, PaginatedResponse } from "@/types";
+import { ENDPOINTS } from "@/constants";
 
 const initialState: LoggerState = {
   logs: [],
@@ -53,7 +22,7 @@ export const fetchLogs = createAsyncThunk(
     const { page = 1, limit = 20 } = params || {};
     const offset = (page - 1) * limit;
     
-    const response = await axiosClient.get("/logger", { 
+    const response = await axiosClient.get(ENDPOINTS.LOGS, { 
       params: { limit, offset } 
     });
 
@@ -70,7 +39,7 @@ export const fetchLogs = createAsyncThunk(
       };
     }
     
-    return response.data as LoggerResponse;
+    return response.data as PaginatedResponse<SystemLog>;
   }
 );
 

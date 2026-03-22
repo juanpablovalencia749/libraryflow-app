@@ -1,4 +1,4 @@
-import type { Book } from "@/store/booksSlice";
+import type { Book } from "@/types";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,8 +61,8 @@ export const BookCard = ({ book, onAction }: BookCardProps) => {
           )}
 
           {hasMyReservation && (
-            <Badge className={`border-none font-bold tracking-wider uppercase shadow-md animate-in slide-in-from-right-2 ${myQueuePosition === 1 ? 'bg-green-600 text-white animate-pulse' : 'bg-emerald-600 text-white'}`}>
-              {myQueuePosition === 1 ? 'Your Turn!' : `Waitlist #${myQueuePosition}`}
+            <Badge className={`border-none font-bold tracking-wider uppercase shadow-md animate-in slide-in-from-right-2 ${myQueuePosition === 1 && isAvailable ? 'bg-green-600 text-white' : 'bg-emerald-600 text-white'}`}>
+              {myQueuePosition === 1 && isAvailable ? 'Your Turn!' : `Waitlist #${myQueuePosition}`}
             </Badge>
           )}
 
