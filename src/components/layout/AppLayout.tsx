@@ -1,7 +1,8 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import { logout } from "@/store/authSlice";
+import { store, type RootState } from "@/store";
+import { axiosClient, startAutoRefreshEvery12Minutes } from "@/api/axiosClient";
+import { fetchSession, logout } from "@/store/authSlice";
 import { BookOpen, ChevronDown, LogOut, Menu } from "lucide-react";
 
 import {
@@ -13,6 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+store.dispatch(fetchSession());
+startAutoRefreshEvery12Minutes();
 
 export const AppLayout = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -209,7 +213,6 @@ export const AppLayout = () => {
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="flex items-center gap-2 font-bold text-lg text-primary/80">
               <BookOpen className="h-5 w-5" />
-              <span>LibraryFlow</span>
             </div>
             <div className="text-sm text-muted-foreground font-medium">
               © {new Date().getFullYear()} LibraryFlow. All rights reserved.

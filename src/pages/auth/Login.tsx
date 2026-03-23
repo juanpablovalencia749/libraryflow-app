@@ -1,61 +1,67 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { useState } from 'react';
-import { axiosClient } from '@/api/axiosClient';
-import { setCredentials } from '@/store/authSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/store";
+import { useState } from "react";
+import { axiosClient } from "@/api/axiosClient";
+import { fetchSession, loginSuccess } from "@/store/authSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BookOpen } from "lucide-react";
+import { AxiosError } from "axios";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const Login = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [error, setError] = useState<string | null>(null);
-  
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setError(null);
-      // Calls the /auth/login endpoint
-      const response = await axiosClient.post('/auth/login', data);
-      
-      const { token, user, access_token } = response.data;
-      const actualToken = access_token || token;
-      
-      let userData = user;
-      if (!userData && actualToken) {
-        try {
-          const payload = JSON.parse(atob(actualToken.split('.')[1]));
-          userData = { 
-            id: payload.sub, 
-            email: payload.email, 
-            name: payload.name || payload.email.split('@')[0], 
-            role: payload.role || 'USER' 
-          };
-        } catch (e) {
-          userData = { email: data.email, name: 'User', role: 'USER' };
-        }
+      await axiosClient.post("/auth/login", data);
+      dispatch(loginSuccess());
+      await dispatch(fetchSession())
+        .unwrap()
+        .catch(() => {});
+      navigate("/");
+    } catch (err: unknown) {
+      let message = "Failed to login. Please check your credentials.";
+
+      if (err instanceof AxiosError) {
+        message =
+          err.response?.data?.message ??
+          err.response?.data?.error ??
+          err.message ??
+          message;
       }
-      
-      dispatch(setCredentials({ user: userData }));
-      navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
+
+      setError(message);
     }
   };
 
@@ -65,7 +71,9 @@ export const Login = () => {
         <div className="flex justify-center mb-4">
           <BookOpen className="h-10 w-10 text-primary" />
         </div>
-        <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-bold tracking-tight">
+          Welcome back
+        </CardTitle>
         <CardDescription>
           Enter your email and password to access your account
         </CardDescription>
@@ -79,33 +87,42 @@ export const Login = () => {
           )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
+            <Input
+              id="email"
+              type="email"
               placeholder="you@example.com"
-              {...register('email')}
+              {...register("email")}
             />
-            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input 
-              id="password" 
-              type="password" 
+            <Input
+              id="password"
+              type="password"
               placeholder="••••••••"
-              {...register('password')}
+              {...register("password")}
             />
-            {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-xs text-destructive">
+                {errors.password.message}
+              </p>
+            )}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link to="/auth/register" className="text-primary hover:underline font-medium">
+          Don't have an account?{" "}
+          <Link
+            to="/auth/register"
+            className="text-primary hover:underline font-medium"
+          >
             Sign up
           </Link>
         </p>

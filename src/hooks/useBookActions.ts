@@ -6,28 +6,35 @@ import { fetchBookById } from "@/store/booksSlice";
 
 export const useBookActions = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [actionStatus, setActionStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [actionStatus, setActionStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
 
-  const performAction = async (bookId: number, options: { 
-    isLoan: boolean; 
-    notes?: string;
-    onSuccess?: (result: { queuePosition?: number } | any) => void;
-    reFetchBook?: boolean;
-  }) => {
+  const performAction = async (
+    bookId: number,
+    options: {
+      isLoan: boolean;
+      notes?: string;
+      onSuccess?: (result: { queuePosition?: number } | unknown) => void;
+      reFetchBook?: boolean;
+    },
+  ) => {
     setActionStatus("loading");
     try {
       const action = options.isLoan ? loanBook : reserveBook;
-      const result = await dispatch(action({ bookId, notes: options.notes || "" })).unwrap();
-      
+      const result = await dispatch(
+        action({ bookId, notes: options.notes || "" }),
+      ).unwrap();
+
       if (!options.isLoan && result.queuePosition) {
         setQueuePosition(result.queuePosition);
       } else {
         setQueuePosition(null);
       }
-      
+
       setActionStatus("success");
-      
+
       if (options.onSuccess) {
         options.onSuccess(result);
       }
@@ -69,6 +76,6 @@ export const useBookActions = () => {
     resetStatus,
     isLoading: actionStatus === "loading",
     isSuccess: actionStatus === "success",
-    isError: actionStatus === "error"
+    isError: actionStatus === "error",
   };
 };

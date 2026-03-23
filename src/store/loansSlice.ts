@@ -13,7 +13,7 @@ export const fetchMyLoans = createAsyncThunk<LoanResponse>(
   async () => {
     const [loansRes, reservationsRes] = await Promise.all([
       axiosClient.get(ENDPOINTS.LOANS.MY_LOANS),
-      axiosClient.get("/loans/my-reservations"), // Add this to ENDPOINTS if missing or use string for now
+      axiosClient.get("/loans/my-reservations"),
     ]);
 
     return {

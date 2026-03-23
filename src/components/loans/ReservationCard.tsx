@@ -2,19 +2,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Library, CheckCircle, Hash } from "lucide-react";
+import type { Reservation } from "@/types";
 
 interface ReservationCardProps {
-  reservation: any;
+  reservation: Reservation;
   onLoan: (bookId: number) => void;
 }
 
-export const ReservationCard = ({ reservation, onLoan }: ReservationCardProps) => {
-  const isReady = reservation.queuePosition === 1 && reservation.book.status === "AVAILABLE";
+export const ReservationCard = ({
+  reservation,
+  onLoan,
+}: ReservationCardProps) => {
+  const isReady =
+    reservation.queuePosition === 1 && reservation.book.status === "AVAILABLE";
 
   return (
-    <Card
-      className="overflow-hidden border-none bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30"
-    >
+    <Card className="overflow-hidden border-none bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30">
       <CardHeader className="p-5 flex flex-row items-center justify-between">
         <div className="space-y-1">
           <CardTitle className="text-lg font-bold line-clamp-1">

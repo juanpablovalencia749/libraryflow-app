@@ -16,17 +16,13 @@ const initialState: LoggerState = {
 export const fetchLogs = createAsyncThunk(
   "logger/fetchLogs",
   async (params?: { page?: number; limit?: number }) => {
-    // If we use limit/offset, we might need to map them.
-    // However, typical NestJS APIs with pagination use page/limit.
-    // The user mentioned limit/offset specifically.
     const { page = 1, limit = 20 } = params || {};
     const offset = (page - 1) * limit;
-    
-    const response = await axiosClient.get(ENDPOINTS.LOGS, { 
-      params: { limit, offset } 
+
+    const response = await axiosClient.get(ENDPOINTS.LOGS, {
+      params: { limit, offset },
     });
 
-    // Handle both array and paginated response
     if (Array.isArray(response.data)) {
       return {
         data: response.data,
@@ -38,9 +34,9 @@ export const fetchLogs = createAsyncThunk(
         },
       };
     }
-    
+
     return response.data as PaginatedResponse<SystemLog>;
-  }
+  },
 );
 
 const loggerSlice = createSlice({
@@ -63,7 +59,9 @@ const loggerSlice = createSlice({
           state.total = action.payload.meta.total;
           state.page = action.payload.meta.page;
           state.limit = action.payload.meta.limit;
-          state.totalPages = action.payload.meta.totalPages || Math.ceil(action.payload.meta.total / action.payload.meta.limit);
+          state.totalPages =
+            action.payload.meta.totalPages ||
+            Math.ceil(action.payload.meta.total / action.payload.meta.limit);
         }
       })
       .addCase(fetchLogs.rejected, (state, action) => {

@@ -7,17 +7,22 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, user } = useSelector(
+  const { isAuthenticated, user, sessionStatus } = useSelector(
     (state: RootState) => state.auth,
   );
+
+  if (sessionStatus === "loading") {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />;
   }
 
-  if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
-    // If the user's role is not in the allowed list, redirect to a safe page (e.g. dashboard or books list)
-    return <Navigate to="/" replace />;
+  if (allowedRoles) {
+    if (!user?.role || !allowedRoles.includes(user.role)) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <Outlet />;

@@ -1,17 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Book as BookIcon, Clock, RotateCcw } from "lucide-react";
+import type { Loan } from "@/types";
 
 interface LoanCardProps {
-  loan: any;
+  loan: Loan;
   onReturn: (id: number) => void;
 }
 
 export const LoanCard = ({ loan, onReturn }: LoanCardProps) => {
   return (
-    <Card
-      className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow bg-white dark:bg-gray-800/40"
-    >
+    <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow bg-white dark:bg-gray-800/40">
       <CardHeader className="flex flex-row items-start gap-4 p-5">
         <div className="h-20 w-16 bg-muted rounded-md overflow-hidden shrink-0">
           {loan.book.imageUrl ? (

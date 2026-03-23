@@ -7,10 +7,10 @@ import authReducer from '@/store/authSlice';
 import { Login } from '../Login';
 import { axiosClient } from '@/api/axiosClient';
 
-// Mock axios
 vi.mock('@/api/axiosClient', () => ({
   axiosClient: {
     post: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
@@ -49,9 +49,16 @@ describe('Login Component', () => {
     });
   });
 
-  it('dispatches login success and navigates', async () => {
-    (axiosClient.post as any).mockResolvedValueOnce({
-      data: { token: 'fake-jwt', user: { name: 'Test', email: 'test@test.com', role: 'USER' } },
+  it('calls login and session when credentials succeed', async () => {
+    (axiosClient.post as any).mockResolvedValueOnce({ data: {} });
+    (axiosClient.get as any).mockResolvedValueOnce({
+      data: {
+        id: 1,
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@test.com',
+        role: 'USER',
+      },
     });
 
     renderWithProviders(<Login />);
@@ -61,12 +68,11 @@ describe('Login Component', () => {
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
     await waitFor(() => {
-      // In a real testing environment, we would monitor the store or navigate history.
-      // Since it's a minimal test, just asserting axios is called is enough.
       expect(axiosClient.post).toHaveBeenCalledWith('/auth/login', {
         email: 'test@test.com',
         password: 'password123',
       });
+      expect(axiosClient.get).toHaveBeenCalled();
     });
   });
 });

@@ -1,17 +1,12 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import {
-  Clock,
-  Loader2,
-  Library,
-} from "lucide-react";
+import { Clock, Loader2, Library } from "lucide-react";
 
 // Hooks & Components
 import { useMyLoans } from "@/hooks/useMyLoans";
 import { useBookActions } from "@/hooks/useBookActions";
 import { LoanCard } from "@/components/loans/LoanCard";
 import { ReservationCard } from "@/components/loans/ReservationCard";
-import type { Loan, Reservation } from "@/types";
 
 export const MyLoans = () => {
   const { loans, reservations, isLoading, refresh } = useMyLoans();
@@ -36,9 +31,9 @@ export const MyLoans = () => {
   const onConfirmLoan = async () => {
     if (!selectedId) return;
     setActionLoading(true);
-    const result = await performAction(selectedId, { 
-      isLoan: true, 
-      notes: "Loaned from waitlist" 
+    const result = await performAction(selectedId, {
+      isLoan: true,
+      notes: "Loaned from waitlist",
     });
     if (result.success) {
       refresh();
@@ -88,11 +83,7 @@ export const MyLoans = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loans.map((loan) => (
-            <LoanCard 
-              key={loan.id} 
-              loan={loan} 
-              onReturn={handleReturnClick} 
-            />
+            <LoanCard key={loan.id} loan={loan} onReturn={handleReturnClick} />
           ))}
 
           {loans.length === 0 && (
@@ -114,10 +105,10 @@ export const MyLoans = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reservations.map((res) => (
-            <ReservationCard 
-              key={res.id} 
-              reservation={res} 
-              onLoan={handleLoanClick} 
+            <ReservationCard
+              key={res.id}
+              reservation={res}
+              onLoan={handleLoanClick}
             />
           ))}
 
@@ -154,4 +145,3 @@ export const MyLoans = () => {
     </div>
   );
 };
-

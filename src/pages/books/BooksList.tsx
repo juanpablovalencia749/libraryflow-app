@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Search, Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { BookCard } from "@/components/books/BookCard";
 import { BookActionModal } from "@/components/books/BookActionModal";
@@ -23,20 +29,21 @@ export const BooksList = () => {
     refresh,
     isLoading,
     isFailed,
-    isSucceeded
+    isSucceeded,
   } = useBooks({ page: urlPage, limit: 4 });
 
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Sync internal page with URL parameter
   const onPageClick = (page: number) => {
     setSearchParams({ page: page.toString(), search: searchTerm });
     handlePageChange(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const [localSearch, setLocalSearch] = useState(searchParams.get("search") || "");
+  const [localSearch, setLocalSearch] = useState(
+    searchParams.get("search") || "",
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -86,15 +93,17 @@ export const BooksList = () => {
       {isLoading && books.length === 0 && (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground font-medium">Loading collection...</p>
+          <p className="text-muted-foreground font-medium">
+            Loading collection...
+          </p>
         </div>
       )}
-      
+
       {isFailed && (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <p className="text-destructive font-semibold">Error: {error}</p>
-          <button 
+          <button
             onClick={refresh}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
@@ -107,16 +116,14 @@ export const BooksList = () => {
         <div className="space-y-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {books.map((book) => (
-              <BookCard 
-                key={book.id} 
-                book={book} 
-                onAction={openActionModal} 
-              />
+              <BookCard key={book.id} book={book} onAction={openActionModal} />
             ))}
-            
+
             {books.length === 0 && (
               <div className="col-span-full py-32 text-center bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
-                <p className="text-muted-foreground text-lg italic">No books found matching your search.</p>
+                <p className="text-muted-foreground text-lg italic">
+                  No books found matching your search.
+                </p>
               </div>
             )}
           </div>
@@ -137,18 +144,25 @@ export const BooksList = () => {
 
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .filter(
+                      (p) =>
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - currentPage) <= 1,
+                    )
                     .map((p, index, array) => (
                       <div key={p} className="flex items-center gap-1">
                         {index > 0 && array[index - 1] !== p - 1 && (
-                          <span className="text-muted-foreground px-1">...</span>
+                          <span className="text-muted-foreground px-1">
+                            ...
+                          </span>
                         )}
                         <Button
                           variant={currentPage === p ? "default" : "outline"}
                           size="sm"
                           onClick={() => onPageClick(p)}
                           disabled={isLoading}
-                          className={`min-w-[40px] rounded-full ${currentPage === p ? 'shadow-md shadow-primary/20' : ''}`}
+                          className={`min-w-[40px] rounded-full ${currentPage === p ? "shadow-md shadow-primary/20" : ""}`}
                         >
                           {p}
                         </Button>
@@ -187,5 +201,3 @@ export const BooksList = () => {
     </div>
   );
 };
-
-

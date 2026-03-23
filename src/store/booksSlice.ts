@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { axiosClient } from "@/api/axiosClient";
+import { axiosClient, type ApiError } from "@/api/axiosClient";
 import type { Book, PaginatedResponse, BooksState } from "@/types";
 import { ENDPOINTS } from "@/constants";
+import { AxiosError } from "axios";
 
 const initialState: BooksState = {
   books: [],
@@ -25,9 +26,6 @@ export const fetchBooks = createAsyncThunk(
     order?: "asc" | "desc";
   }) => {
     const response = await axiosClient.get(ENDPOINTS.BOOKS.BASE, { params });
-    // Assume backend returns { data: [], meta: {...} } or just [] if no pagination setup.
-    // If backend returns just an array, we map it to response.data
-    // I will assume it returns { data, meta } based on typical paginated APIs.
     if (Array.isArray(response.data)) {
       return {
         data: response.data,
@@ -67,13 +65,26 @@ export const updateBook = createAsyncThunk(
   },
 );
 
-export const deleteBook = createAsyncThunk(
-  "books/deleteBook",
-  async (id: number) => {
+export const deleteBook = createAsyncThunk<
+  number,
+  number,
+  { rejectValue: ApiError }
+>("books/deleteBook", async (id: number, { rejectWithValue }) => {
+  try {
     await axiosClient.delete(ENDPOINTS.BOOKS.BY_ID(id));
     return id;
-  },
-);
+  } catch (err: unknown) {
+    if (err instanceof AxiosError && err.response?.data) {
+      return rejectWithValue(err.response.data as ApiError);
+    }
+
+    return rejectWithValue({
+      message: "Failed to delete the book.",
+      error: "Unknown error",
+      statusCode: 500,
+    });
+  }
+});
 
 const booksSlice = createSlice({
   name: "books",

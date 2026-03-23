@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
-import {
-  createBook,
-  updateBook,
-  deleteBook,
-} from "@/store/booksSlice";
+import { createBook, updateBook, deleteBook } from "@/store/booksSlice";
 import type { Book } from "@/types";
 import { DataTable } from "@/components/ui/DataTable";
 import { Button } from "@/components/ui/button";
@@ -18,6 +14,7 @@ import { useBooks } from "@/hooks/useBooks";
 import { useBookActions } from "@/hooks/useBookActions";
 import { BookFormModal } from "@/components/admin/BookFormModal";
 import type { BookFormValues } from "@/schemas";
+import type { ApiError } from "@/api/axiosClient";
 
 export const AdminDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -40,23 +37,54 @@ export const AdminDashboard = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoanDialogOpen, setIsLoanDialogOpen] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
+    null,
+  );
 
   const onDeleteConfirm = async () => {
-    if (selectedBookId) {
-      await dispatch(deleteBook(selectedBookId));
+    if (!selectedBookId) return;
+
+    setIsDeleteLoading(true);
+    setDeleteErrorMessage(null);
+
+    try {
+      await dispatch(deleteBook(selectedBookId)).unwrap();
       refresh();
       setIsDeleteDialogOpen(false);
+    } catch (err: unknown) {
+      let message = "Failed to delete the book.";
+
+      if (typeof err === "object" && err !== null) {
+        const e = err as {
+          response?: {
+            data?: Partial<ApiError>;
+          };
+          message?: string;
+        };
+
+        message =
+          e.response?.data?.message ??
+          e.response?.data?.error ??
+          e.message ??
+          message;
+      }
+      setDeleteErrorMessage(message);
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const onLoanConfirm = async () => {
     if (selectedBookId) {
-      await performAction(selectedBookId, { isLoan: true, notes: "Loaned by Admin" });
+      await performAction(selectedBookId, {
+        isLoan: true,
+        notes: "Loaned by Admin",
+      });
       refresh();
       setIsLoanDialogOpen(false);
     }
   };
-
 
   const openDeleteDialog = (id: number) => {
     setSelectedBookId(id);
@@ -67,7 +95,6 @@ export const AdminDashboard = () => {
     setSelectedBookId(id);
     setIsLoanDialogOpen(true);
   };
-
 
   const onFormSubmit = async (data: BookFormValues) => {
     if (editingBook) {
@@ -103,12 +130,16 @@ export const AdminDashboard = () => {
           {
             header: "ID",
             accessor: (book: Book) => (
-              <span className="font-medium text-muted-foreground">#{book.id}</span>
+              <span className="font-medium text-muted-foreground">
+                #{book.id}
+              </span>
             ),
           },
           {
             header: "Title",
-            accessor: (book: Book) => <span className="font-semibold">{book.title}</span>,
+            accessor: (book: Book) => (
+              <span className="font-semibold">{book.title}</span>
+            ),
           },
           {
             header: "Author",
@@ -124,8 +155,8 @@ export const AdminDashboard = () => {
               <Badge
                 variant={book.status === "AVAILABLE" ? "secondary" : "default"}
                 className={`font-bold tracking-wider uppercase ${
-                  book.status === "AVAILABLE" 
-                    ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200" 
+                  book.status === "AVAILABLE"
+                    ? "bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
                     : "bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200"
                 }`}
               >
@@ -168,7 +199,7 @@ export const AdminDashboard = () => {
         ]}
       />
 
-      <BookFormModal 
+      <BookFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         editingBook={editingBook}
@@ -183,8 +214,9 @@ export const AdminDashboard = () => {
         description="Are you sure you want to delete this book? This action cannot be undone."
         confirmText="Delete"
         variant="destructive"
+        isLoading={isDeleteLoading}
+        errorMessage={deleteErrorMessage}
       />
-
 
       <ConfirmDialog
         isOpen={isLoanDialogOpen}
@@ -197,4 +229,3 @@ export const AdminDashboard = () => {
     </div>
   );
 };
-

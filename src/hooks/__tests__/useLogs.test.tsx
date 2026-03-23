@@ -25,6 +25,7 @@ vi.mock('react-redux', async () => {
       auth: {
         isAuthenticated: false,
         user: null,
+        sessionStatus: 'unauthenticated',
         status: 'idle',
         error: null
       }

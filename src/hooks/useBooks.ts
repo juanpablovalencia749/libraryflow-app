@@ -12,45 +12,60 @@ interface UseBooksOptions {
 }
 
 export const useBooks = (options: UseBooksOptions = {}) => {
-  const { 
-    page = 1, 
-    limit = 20, 
-    initialSearch = "", 
+  const {
+    page = 1,
+    limit = 20,
+    initialSearch = "",
     debounceMs = 1000,
-    autoFetch = true
+    autoFetch = true,
   } = options;
 
   const dispatch = useDispatch<AppDispatch>();
-  const { books, status, error, total, page: currentPage, totalPages } = useSelector((state: RootState) => state.books);
+  const {
+    books,
+    status,
+    error,
+    total,
+    page: currentPage,
+    totalPages,
+  } = useSelector((state: RootState) => state.books);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
 
-  const loadBooks = useCallback((search?: string, p?: number) => {
-    dispatch(fetchBooks({ 
-      page: p || page, 
-      limit, 
-      title: search !== undefined ? search : searchTerm 
-    }));
-  }, [dispatch, limit, page, searchTerm]);
+  const loadBooks = useCallback(
+    (search?: string, p?: number) => {
+      dispatch(
+        fetchBooks({
+          page: p || page,
+          limit,
+          title: search !== undefined ? search : searchTerm,
+        }),
+      );
+    },
+    [dispatch, limit, page, searchTerm],
+  );
 
-  // Combined effect for initial fetch and search debounce
   useEffect(() => {
     if (!autoFetch) return;
-
-    // If it's the first time and searchTerm matches initial, fetch immediately
     if (searchTerm === initialSearch) {
       loadBooks();
       return;
     }
 
-    // Otherwise, use debounce for search changes
     const delayDebounceFn = setTimeout(() => {
       loadBooks(searchTerm, 1);
     }, debounceMs);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, debounceMs, loadBooks, autoFetch, initialSearch, isAuthenticated]);
+  }, [
+    searchTerm,
+    debounceMs,
+    loadBooks,
+    autoFetch,
+    initialSearch,
+    isAuthenticated,
+  ]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -77,6 +92,6 @@ export const useBooks = (options: UseBooksOptions = {}) => {
     refresh,
     isLoading: status === "loading",
     isSucceeded: status === "succeeded",
-    isFailed: status === "failed"
+    isFailed: status === "failed",
   };
 };

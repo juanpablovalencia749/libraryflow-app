@@ -5,8 +5,8 @@ export interface SystemLog {
   description: string;
   userId: number | null;
   ipAddress: string | null;
-  beforeData: any | null; // Data snapshots are often dynamic
-  afterData: any | null;
+  beforeData: unknown | null;
+  afterData: unknown | null;
   createdAt: string;
 }
 
